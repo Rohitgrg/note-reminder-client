@@ -2,12 +2,19 @@ import React, { useState, useEffect } from "react";
 import { PlusIcon, BellIcon, PencilSquareIcon, TrashIcon} from '@heroicons/react/24/solid';
 import useDebounce from "../hooks/useDebounce";
 import {useNotesQuery, useCreateNote, useUpdateNote, useDeleteNote} from "../queries/useNotes";
+import {useCreateReminder, useRemindersQuery} from "../queries/useReminders";
 
 const Note = () => {
-    const { data: notes, error, isLoading } = useNotesQuery();
+    //notes
+    const { data: notes, error, isLoading: loadingNotes } = useNotesQuery();
     const { mutate: createNote, isLoading: isCreating, error: createError } = useCreateNote();
     const { mutate: updateNote, isLoading: isUpdating, error: updateError } = useUpdateNote();
     const { mutate: deleteNote, isLoading: isDeleting, error: deleteError } = useDeleteNote();
+
+    //reminders
+    const { data: reminders, isLoading: loadingReminders, error: remindersError } = useRemindersQuery();
+    const { mutate: createReminder, isLoading: isCreatingReminder, error: createReminderErr } = useCreateReminder();
+
 
     const [heading, setHeading] = useState('');
     const [body, setBody] = useState('');
@@ -18,6 +25,7 @@ const Note = () => {
     const [dateError, setDateError] = useState('');
     const [headingError, setHeadingError] = useState('');
     const [currentNote, setCurrentNote] = useState(null);
+    const [lastUpdated, setLastUpdated] = useState(new Date());
 
 
     const toggleModal = () => {
@@ -44,6 +52,7 @@ const Note = () => {
                 if (debouncedBody !== '' && heading !== '') {
                     createNote({heading: heading, body: debouncedBody}, {
                         onSuccess: (newNote) => {
+                            setLastUpdated(new Date());
                             setCurrentNote(newNote);
                         },
                         onError: (error) => {
@@ -58,6 +67,7 @@ const Note = () => {
                 if (debouncedBody !== '' && heading !== '') {
                     updateNote( { id: currentNote.id, note: {heading: heading, body: body} }, {
                         onSuccess: (newNote) => {
+                            setLastUpdated(new Date());
                             console.log("Note updated")
                         },
                         onError: (error) => {
@@ -86,6 +96,18 @@ const Note = () => {
         }
 
         if (isValid) {
+            createReminder({
+                note_id: currentNote.id,
+                reminder_date: dateTime,
+                email: email
+            }, {
+                onSuccess: () => {
+                    console.log("Reminder created successfully");
+                },
+                onError: (error) => {
+                    console.error("Error creating note:", error);
+                }
+            });
             toggleModal();
         }
     };
@@ -98,7 +120,7 @@ const Note = () => {
 
     const handleEdit = (id) => {
         if(isUpdating || isDeleting || isCreating) return;
-        const toBeEditedNote = notes.find((note) => note.id === id);
+        const toBeEditedNote = notes?.find((note) => note.id === id);
         if(toBeEditedNote){
             setCurrentNote(toBeEditedNote);
             setHeading(toBeEditedNote.heading);
@@ -108,7 +130,7 @@ const Note = () => {
 
     const handleDelete = (id) => {
         if(isUpdating || isDeleting || isCreating) return;
-        const toBeDeletedNote = notes.find((note) => note.id === id);
+        const toBeDeletedNote = notes?.find((note) => note.id === id);
         if(toBeDeletedNote){
             deleteNote( toBeDeletedNote.id, {
                 onSuccess: (newNote) => {
@@ -122,39 +144,71 @@ const Note = () => {
         }
     }
 
+    const getNoteWithId = (id) => {
+        return notes?.find(note => note.id === id);
+    }
+
     return (
-        <div className="flex">
-            <div className="w-1/3 bg-[#E2F1FC] h-screen p-8 overflow-auto">
-                <h1 className="text-xl font-bold italic mb-8">Levo Notes</h1>
-                <p className="text-gray-400 italic mb-4">Recent notes</p>
-                {error && <p>Error fetching notes: {error.message}</p>}
-                <ul className="text-left text-gray-600">
-                    {notes && notes.map(note => (
-                        <li key={note.id} className="mb-4 p-4 bg-gray-200 rounded">
-                            <div className="flex justify-between items-center">
-                                <h2 className="font-bold">{note.heading}</h2>
-                                <div className="flex gap-2">
-                                    <div
-                                        onClick={() => handleEdit(note.id)}
-                                        className="w-4 h-4 cursor-pointer hover:text-[#259BE9]" >
-                                        <PencilSquareIcon className="size-4"/>
-                                    </div>
-                                    <div
-                                        onClick={() => handleDelete(note.id)}
-                                        className="w-4 h-4 cursor-pointer hover:text-[#259BE9]">
-                                        <TrashIcon className="size-4"/>
+        <div className="flex flex-col-reverse md:flex-row">
+            <div className="w-full md:w-1/3 h-screen bg-[#E2F1FC]">
+                <div className="h-[50vh] p-8 overflow-auto">
+                    <h1 className="text-xl font-bold italic mb-8">Levo Notes</h1>
+                    <p className="text-gray-400 italic mb-4">Recent notes</p>
+                    {error && <p>Error fetching notes: {error.message}</p>}
+                    <ul className="text-left text-gray-600">
+                        {notes && notes.map(note => (
+                            <li key={note.id} className="mb-4 p-4 bg-gray-200 rounded">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="font-bold">{note?.heading}</h2>
+                                    <div className="flex gap-2">
+                                        <div
+                                            onClick={() => handleEdit(note.id)}
+                                            className="w-4 h-4 cursor-pointer hover:text-[#259BE9]">
+                                            <PencilSquareIcon className="size-4"/>
+                                        </div>
+                                        <div
+                                            onClick={() => handleDelete(note.id)}
+                                            className="w-4 h-4 cursor-pointer hover:text-[#259BE9]">
+                                            <TrashIcon className="size-4"/>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <p>{note.body}</p>
-                        </li>
-                    ))}
-                </ul>
+                                <p>{note.body}</p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                <div className="h-[50vh] p-8 overflow-auto">
+                    <p className="text-gray-400 italic mb-4">Reminders</p>
+                    {remindersError && <p>Error fetching notes: {remindersError.message}</p>}
+                    <ul className="text-left text-gray-600">
+                        {reminders && reminders.map(reminder => (
+                            <>
+                                {getNoteWithId(reminder.note_id) && <li key={reminder.id} className="mb-4 p-4 bg-gray-200 rounded">
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-sm italic">Reminder set
+                                            at {reminder.reminder_date.toLocaleString()} for {" "}
+                                            {getNoteWithId(reminder.note_id)?.heading}</p>
+                                    </div>
+                                </li>}
+                            </>
+                        ))}
+                    </ul>
+                </div>
+
             </div>
-            <div className="w-2/3">
+            <div className="w-full md;w-2/3">
                 <h1 className="text-xl font-bold p-8">New Note</h1>
                 <span className="italic">Please note that heading is required for your note to be saved</span>
                 <div className="p-8">
+                    <div className="flex justify-between">
+                        {currentNote === null || heading === '' ?
+                            <p className="text-gray-500 italic text-xs">Not Saved yet</p>
+                            : <p className="text-gray-500 italic text-xs">Last updated
+                                at: {lastUpdated.toLocaleString()}</p>}
+                        <p></p>
+                    </div>
                     <div className="flex justify-between gap-2">
                         <input
                             type="text"
@@ -165,7 +219,9 @@ const Note = () => {
                         />
                         <div title={"Set reminder"}
                              onClick={toggleModal}
-                             className="mb-8 text-[#259BE9] bg-gray-100 rounded flex justify-center items-center px-4 cursor-pointer hover:bg-[#259BE9] hover:text-white">
+                             className={`mb-8 text-[#259BE9] bg-gray-100 rounded flex justify-center items-center px-4 cursor-pointer
+                                ${currentNote === null ? 'bg-gray-500 text-gray-300 cursor-not-allowed' : 'hover:bg-[#259BE9] hover:text-white'}
+                            `}>
                             <BellIcon className="size-8"/>
                         </div>
                     </div>

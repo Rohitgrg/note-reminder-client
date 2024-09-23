@@ -7,7 +7,6 @@ export const useNotesQuery = () => {
 
 export const useCreateNote = () => {
     const queryClient = useQueryClient();
-
     return useMutation(createNote, {
         onSuccess: () => {
             queryClient.invalidateQueries('notes');
@@ -19,9 +18,13 @@ export const useCreateNote = () => {
 };
 
 export const useUpdateNote = () => {
+    const queryClient = useQueryClient();
     return useMutation(
         ({ id, note }) => updateNote(id, note),
         {
+            onSuccess: () => {
+                queryClient.invalidateQueries('notes');
+            },
             onError: (error) => {
                 console.error('Error updating note:', error);
             },
