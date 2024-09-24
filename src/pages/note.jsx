@@ -133,8 +133,8 @@ const Note = () => {
         const toBeDeletedNote = notes?.find((note) => note.id === id);
         if(toBeDeletedNote){
             deleteNote( toBeDeletedNote.id, {
-                onSuccess: (newNote) => {
-                    if(currentNote.id === toBeDeletedNote.id) handleCreateNew();
+                onSuccess: () => {
+                    if(currentNote?.id === toBeDeletedNote?.id) handleCreateNew();
                     console.log("Note deleted");
                 },
                 onError: (error) => {
