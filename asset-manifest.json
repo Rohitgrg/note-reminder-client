@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/note-reminder-client/static/css/main.9f53acfc.css",
-    "main.js": "/note-reminder-client/static/js/main.f79f574f.js",
+    "main.js": "/note-reminder-client/static/js/main.30ae326d.js",
     "static/js/453.e41518ac.chunk.js": "/note-reminder-client/static/js/453.e41518ac.chunk.js",
     "static/media/logo.svg": "/note-reminder-client/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
     "index.html": "/note-reminder-client/index.html",
     "main.9f53acfc.css.map": "/note-reminder-client/static/css/main.9f53acfc.css.map",
-    "main.f79f574f.js.map": "/note-reminder-client/static/js/main.f79f574f.js.map",
+    "main.30ae326d.js.map": "/note-reminder-client/static/js/main.30ae326d.js.map",
     "453.e41518ac.chunk.js.map": "/note-reminder-client/static/js/453.e41518ac.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.9f53acfc.css",
-    "static/js/main.f79f574f.js"
+    "static/js/main.30ae326d.js"
   ]
 }
